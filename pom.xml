@@ -208,6 +208,11 @@
       </dependency>
       <dependency>
         <groupId>org.codehaus.httpcache4j</groupId>
+        <artifactId>httpcache4j-useragent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.httpcache4j</groupId>
         <artifactId>httpcache4j-storage-api</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -310,6 +315,7 @@
     <module>httpcache4j-core</module>
     <module>httpcache4j-api</module>
     <module>httpcache4j-storage-api</module>
+    <module>httpcache4j-useragent</module>
     <module>resolvers</module>
     <module>storage</module>
     <module>httpcache4j-it</module>
