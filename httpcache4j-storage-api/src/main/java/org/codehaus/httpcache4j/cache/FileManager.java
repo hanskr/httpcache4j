@@ -15,10 +15,13 @@
 
 package org.codehaus.httpcache4j.cache;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.Validate;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import org.codehaus.httpcache4j.util.DeletingFileFilter;
 import org.codehaus.httpcache4j.util.StorageUtil;
 
@@ -34,7 +37,7 @@ public final class FileManager implements Serializable {
     private final File baseDirectory;
 
     public FileManager(final File baseDirectory) {
-        Validate.notNull(baseDirectory, "Base directory may not be null");
+        Preconditions.checkNotNull(baseDirectory, "Base directory may not be null");
         this.baseDirectory = createFilesDirectory(baseDirectory);
     }
 
@@ -53,12 +56,11 @@ public final class FileManager implements Serializable {
         if (!file.getParentFile().exists()) {
             StorageUtil.ensureDirectoryExists(file.getParentFile());
         }
-        FileOutputStream outputStream = FileUtils.openOutputStream(file);
+        OutputSupplier<FileOutputStream> outputStream = Files.newOutputStreamSupplier(file);
         try {
-            IOUtils.copy(stream, outputStream);
+            ByteStreams.copy(stream, outputStream);
         } finally {
-            IOUtils.closeQuietly(stream);
-            IOUtils.closeQuietly(outputStream);
+            Closeables.closeQuietly(stream);
         }
         if (file.length() == 0) {
             file.delete();
@@ -107,13 +109,13 @@ public final class FileManager implements Serializable {
             vary = "default";
         }
         else {
-            vary = DigestUtils.md5Hex(key.getVary().toString()).trim();
+            vary = Hashing.md5().hashString(key.getVary().toString(), Charsets.UTF_8).toString().trim();
         }
         return new File(uriFolder, vary);
     }
 
     public synchronized File resolve(URI uri) {
-        String uriHex = DigestUtils.md5Hex(uri.toString()).trim();
+        String uriHex = Hashing.md5().hashString(uri.toString(), Charsets.UTF_8).toString().trim();
         String distribution = uriHex.substring(0, 2);
         return new File(new File(baseDirectory, distribution), uriHex);
     }

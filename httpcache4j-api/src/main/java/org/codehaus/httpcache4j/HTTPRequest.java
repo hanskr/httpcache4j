@@ -17,7 +17,6 @@
 package org.codehaus.httpcache4j;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang.Validate;
 
 import org.codehaus.httpcache4j.payload.Payload;
 import org.codehaus.httpcache4j.preference.Preferences;
@@ -136,7 +135,7 @@ public final class HTTPRequest {
     }
 
     public HTTPRequest conditionals(Conditionals conditionals) {
-        Validate.notNull(conditionals, "You may not set null conditionals");
+        Preconditions.checkNotNull(conditionals, "You may not set null conditionals");
         return new HTTPRequest(requestURI, method, headers, conditionals, preferences, challenge, payload, new DateTime());
     }
 
@@ -144,12 +143,18 @@ public final class HTTPRequest {
         return method;
     }
 
+    public HTTPRequest method(HTTPMethod method) {
+        Preconditions.checkNotNull(method, "You may not set null method");
+        if (method == this.method) return this;
+        return new HTTPRequest(requestURI, method, headers, conditionals, preferences, challenge, payload, new DateTime());
+    }
+
     public Preferences getPreferences() {
         return preferences;
     }
 
     public HTTPRequest preferences(Preferences preferences) {
-        Validate.notNull(preferences, "You may not set null preferences");
+        Preconditions.checkNotNull(preferences, "You may not set null preferences");
         return new HTTPRequest(requestURI, method, headers, conditionals, preferences, challenge, payload, new DateTime());
     }
 
@@ -173,7 +178,7 @@ public final class HTTPRequest {
     }
 
     public HTTPRequest headers(final Headers headers) {
-        Validate.notNull(headers, "You may not set null headers");
+        Preconditions.checkNotNull(headers, "You may not set null headers");
         return new HTTPRequest(requestURI, method, headers, conditionals, preferences, challenge, payload, new DateTime());
     }
 

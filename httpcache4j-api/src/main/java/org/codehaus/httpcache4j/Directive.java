@@ -16,12 +16,14 @@
 package org.codehaus.httpcache4j;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.math.NumberUtils;
+import com.google.common.collect.ImmutableMap;
+import org.codehaus.httpcache4j.util.NumberUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -30,6 +32,7 @@ import java.util.List;
  */
 public class Directive extends NameValue {
     private final List<Parameter> parameters;
+    private Map<String, Parameter> parameterMap;
     
     public Directive(final String name, String value) {
         this(name, HeaderUtils.removeQuotes(value), Collections.<Parameter>emptyList());
@@ -37,8 +40,7 @@ public class Directive extends NameValue {
 
     public Directive(final String name, String value, List<Parameter> parameters) {
         super(name, HeaderUtils.removeQuotes(value));
-        Validate.notNull(parameters, "Parameters may not be null");
-        Validate.noNullElements(parameters, "Parameters may not contain any null elements");
+        Preconditions.checkNotNull(parameters, "Parameters may not be null");
         this.parameters = ImmutableList.copyOf(parameters);
     }
 
@@ -50,9 +52,35 @@ public class Directive extends NameValue {
         return NumberUtils.toInt(getValue(), -1);
     }
 
+    public Parameter getParameter(String name) {
+        if (parameterMap == null) {
+            synchronized (this) {
+                if (parameterMap == null) {
+                    ImmutableMap.Builder<String, Parameter> builder = ImmutableMap.builder();
+                    for (Parameter parameter : parameters) {
+                        builder.put(parameter.getName(), parameter);
+                    }
+                    parameterMap = builder.build();
+                }
+            }
+        }
+        return parameterMap.get(name);
+    }
+
+    public String getParameterValue(String name) {
+        Parameter param = getParameter(name);
+        if (param != null) {
+            return param.getValue();
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
-        String output = name + "=" + value;
+        String output = name;
+        if (value != null && !value.isEmpty()) {
+            output += "=" + value;
+        }
         if (!parameters.isEmpty()) {
             output = output + "; " + Joiner.on("; ").join(parameters);
         }

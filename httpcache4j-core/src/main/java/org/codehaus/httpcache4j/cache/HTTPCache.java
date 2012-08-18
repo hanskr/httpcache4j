@@ -16,11 +16,10 @@
 
 package org.codehaus.httpcache4j.cache;
 
+import com.google.common.base.Preconditions;
 import org.codehaus.httpcache4j.*;
 import org.codehaus.httpcache4j.mutable.MutableRequest;
 import org.codehaus.httpcache4j.resolver.ResponseResolver;
-
-import org.apache.commons.lang.Validate;
 
 import java.io.IOException;
 import java.net.URI;
@@ -46,8 +45,7 @@ public class HTTPCache {
     private boolean translateHEADToGET = false;
 
     public HTTPCache(CacheStorage storage, ResponseResolver resolver) {
-        Validate.notNull(storage, "Cache storage may not be null");
-        this.storage = storage;
+        this.storage = Preconditions.checkNotNull(storage, "Cache storage may not be null");
         this.resolver = resolver;
         helper = new HTTPCacheHelper(CacheHeaderBuilder.getBuilder());
     }
@@ -61,9 +59,8 @@ public class HTTPCache {
     }
 
     public void setResolver(final ResponseResolver resolver) {
-        Validate.isTrue(this.resolver == null, "You may not set the response resolver more than once.");
-        Validate.notNull(resolver, "Resolver may not be null");
-        this.resolver = resolver;
+        Preconditions.checkArgument(this.resolver == null, "You may not set the response resolver more than once.");
+        this.resolver = Preconditions.checkNotNull(resolver, "Resolver may not be null");
     }
 
     public CacheStorage getStorage() {
@@ -107,10 +104,6 @@ public class HTTPCache {
         }
         HTTPResponse response;
         if (!helper.isCacheableRequest(request)) {
-            //TODO: This invalidation should only happen when we have a successful response.
-            if (!request.getMethod().isSafe()) {
-                storage.invalidate(request.getRequestURI());
-            }
             response = unconditionalResolve(request);
         } else {
             //request is cacheable
@@ -196,10 +189,14 @@ public class HTTPCache {
                 throw new HTTPException(e);
             } else {
                 Headers headers = helper.warn(item.getResponse().getHeaders(), e);
-                response = new HTTPResponse(item.getResponse().getPayload(), item.getResponse().getStatusLine(), headers);
+                response = item.getResponse().withHeaders(headers);
             }
         }
         if (resolvedResponse != null) {
+            if (!request.getMethod().isSafe() && resolvedResponse.getStatus().getCategory() == Status.Category.SUCCESS) {
+                storage.invalidate(request.getRequestURI());
+            }
+
             boolean updated = false;
 
             if (request.getMethod() == HTTPMethod.HEAD && !isTranslateHEADToGET()) {
@@ -221,9 +218,8 @@ public class HTTPCache {
                 if (resolvedResponse.getStatus() == Status.NOT_MODIFIED || resolvedResponse.getStatus() == Status.PARTIAL_CONTENT) {
                     response = updateHeadersFromResolved(request, item, resolvedResponse);
                 } else if (updated) {
-
                     Headers newHeaders = response.getHeaders().add(CacheHeaderBuilder.getBuilder().createMISSXCacheHeader());
-                    response = new HTTPResponse(response.getPayload(), response.getStatus(), newHeaders);
+                    response = response.withHeaders(newHeaders);
                 }
             }
         }
@@ -232,10 +228,7 @@ public class HTTPCache {
 
     private HTTPResponse resolveWithHeadRewrite(HTTPRequest request, HTTPResponse resolvedResponse) throws IOException {
         if (request.getMethod() == HTTPMethod.HEAD && isTranslateHEADToGET()) { // We change this to GET and cache the result.
-            MutableRequest mutableRequest = new MutableRequest(request.getRequestURI(), HTTPMethod.GET);
-            mutableRequest.getHeaders().set(request.getAllHeaders());
-            mutableRequest.setChallenge(request.getChallenge());
-            resolvedResponse = resolver.resolve(mutableRequest.toRequest());
+            resolvedResponse = resolver.resolve(request.method(HTTPMethod.GET));
         } else {
             resolvedResponse = resolver.resolve(request);
         }
@@ -246,7 +239,7 @@ public class HTTPCache {
         HTTPResponse cachedResponse = item.getResponse();
         Headers headers = new Headers(cachedResponse.getHeaders());
         Headers headersToBeSet = helper.removeUnmodifiableHeaders(resolvedResponse.getHeaders());
-        HTTPResponse updatedResponse = new HTTPResponse(cachedResponse.getPayload(), cachedResponse.getStatus(), headers.set(headersToBeSet));
+        HTTPResponse updatedResponse = cachedResponse.withHeaders(headers.set(headersToBeSet));
         return storage.update(request, updatedResponse);
     }
 

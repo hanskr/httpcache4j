@@ -15,10 +15,10 @@
 
 package org.codehaus.httpcache4j.payload;
 
+import com.google.common.base.Preconditions;
 import org.codehaus.httpcache4j.MIMEType;
-import org.apache.commons.lang.Validate;
-import org.apache.commons.io.input.ClosedInputStream;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 
@@ -34,8 +34,7 @@ public class ClosedInputStreamPayload implements Payload, Serializable{
     private MIMEType mimeType;
 
     public ClosedInputStreamPayload(final MIMEType mimeType) {
-        Validate.notNull(mimeType, "MIMEType may not be null");
-        this.mimeType = mimeType;
+        this.mimeType = Preconditions.checkNotNull(mimeType, "MIMEType may not be null");
     }
 
     public MIMEType getMimeType() {
@@ -43,7 +42,12 @@ public class ClosedInputStreamPayload implements Payload, Serializable{
     }
 
     public InputStream getInputStream() {
-        return ClosedInputStream.CLOSED_INPUT_STREAM;
+        return new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return -1;
+            }
+        };
     }
 
     public long length() {

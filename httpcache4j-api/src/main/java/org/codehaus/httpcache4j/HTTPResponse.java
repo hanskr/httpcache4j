@@ -18,8 +18,9 @@ package org.codehaus.httpcache4j;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.Validate;
+import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import org.codehaus.httpcache4j.annotation.Internal;
 import org.codehaus.httpcache4j.payload.InputStreamPayload;
 import org.codehaus.httpcache4j.payload.Payload;
 import org.joda.time.DateTime;
@@ -60,11 +61,9 @@ public final class HTTPResponse {
     }
 
     public HTTPResponse(Payload payload, StatusLine statusLine, Headers headers) {
-        Validate.notNull(statusLine, "You must supply a Status");
-        Validate.notNull(headers, "You must supply some Headers");
-        this.statusLine = statusLine;
+        this.statusLine = Preconditions.checkNotNull(statusLine, "You must supply a Status");
         this.payload = payload;
-        this.headers = headers;
+        this.headers = Preconditions.checkNotNull(headers, "You must supply some Headers");
 
         if (headers.hasHeader(ETAG)) {
             ETag = Tag.parse(headers.getFirstHeader(ETAG).getValue());
@@ -100,6 +99,16 @@ public final class HTTPResponse {
         if (headers.hasHeader(CONTENT_LOCATION)) {
             contentLocation = URI.create(headers.getFirstHeaderValue(CONTENT_LOCATION));
         }
+    }
+
+    @Internal
+    public HTTPResponse withHeaders(Headers headers) {
+        return new HTTPResponse(payload, statusLine, headers);
+    }
+
+    @Internal
+    public HTTPResponse withPayload(Payload payload) {
+        return new HTTPResponse(payload, statusLine, headers);
     }
 
     public boolean hasPayload() {
@@ -167,7 +176,7 @@ public final class HTTPResponse {
                     InputStreamPayload transformed = new InputStreamPayload(stream, payload.getMimeType(), payload.length());
                     return f.apply(transformed);
                 } finally {
-                    IOUtils.closeQuietly(stream);
+                    Closeables.closeQuietly(stream);
                 }
             }
         });
@@ -175,7 +184,7 @@ public final class HTTPResponse {
 
     public void consume() {
         if (hasPayload()) {
-            IOUtils.closeQuietly(payload.getInputStream());
+            Closeables.closeQuietly(payload.getInputStream());
         }
     }
 

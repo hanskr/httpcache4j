@@ -17,10 +17,6 @@ package org.codehaus.httpcache4j;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import org.apache.commons.lang.Validate;
 import org.codehaus.httpcache4j.util.DirectivesParser;
 
 import java.io.Serializable;
@@ -42,11 +38,15 @@ public class Directives implements Iterable<Directive>, Serializable {
     }
 
     public Directives() {
-        this("");
+        directives = Collections.emptyMap();
     }
 
+    @Deprecated
+    /**
+     * @deprecated Use {@link DirectivesParser} or {@link org.codehaus.httpcache4j.util.AuthDirectivesParser} instead.
+     */
     public Directives(String value) {
-        this(DirectivesParser.DEFAULT.parse(value));
+        this(DirectivesParser.parse(value));
     }
 
     public boolean hasDirective(String key) {

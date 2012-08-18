@@ -1,6 +1,8 @@
 package org.codehaus.httpcache4j;
 
-import org.apache.commons.lang.math.NumberUtils;
+
+import org.codehaus.httpcache4j.util.DirectivesParser;
+import org.codehaus.httpcache4j.util.NumberUtils;
 
 /**
  * @author <a href="mailto:hamnis@codehaus.org">Erlend Hamnaberg</a>
@@ -10,7 +12,7 @@ public class CacheControl {
     private final Directives directives;
 
     public CacheControl(String value) {
-        this(new Directives(value));
+        this(DirectivesParser.parse(value));
     }
 
     public CacheControl(Header header) {
