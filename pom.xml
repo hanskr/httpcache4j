@@ -20,7 +20,7 @@
   <groupId>org.codehaus.httpcache4j</groupId>
   <artifactId>httpcache4j</artifactId>
   <packaging>pom</packaging>
-  <version>4.0-M6-SNAPSHOT</version>
+  <version>4.0-M6-FINN1-SNAPSHOT</version>
   <name>Java HTTP cache</name>
   <url>http://httpcache4j.codehaus.org</url>
   <description>HttpCache4j is a library for caching HTTP requests from a client.</description>
@@ -305,10 +305,17 @@
       <name>Codehaus staging repo</name>
       <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2</url>
     </repository>
+<!--
     <snapshotRepository>
       <id>codehaus-snapshots</id>
       <name>Codehaus maven repo</name>
       <url>https://nexus.codehaus.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+-->
+    <snapshotRepository>
+      <id>finn-snapshots</id>
+      <name>Finn maven repo</name>
+      <url>http://mavenproxy.finntech.no/nexus/content/repositories/finntech-internal-snapshot</url>
     </snapshotRepository>
     <site>
       <id>codehaus-site</id>
