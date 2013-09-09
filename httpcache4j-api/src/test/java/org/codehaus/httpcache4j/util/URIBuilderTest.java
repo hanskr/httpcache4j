@@ -188,7 +188,15 @@ public class URIBuilderTest {
         URIBuilder builder = URIBuilder.empty();
         builder = builder.withScheme("http").withHost("example.com").addParameter("q", URIEncoder.encodeUTF8("a+b"));
         assertEquals("URIs did not match", uri, builder.toURI());
-    }    
+    }
+
+    @Test
+    public void testFromExistingURIWithEscapedQueryStringWithAmpersand() {
+        URI uri = URI.create("http://example.com?q=B%26W");
+        URIBuilder builder = URIBuilder.empty();
+        builder = builder.withScheme("http").withHost("example.com").addParameter("q", URIEncoder.encodeUTF8("B&W"));
+        assertEquals("URIs did not match", uri, builder.toURI());
+    }
 
     @Test
     public void testFromExistingQueryWithNullValue() {
